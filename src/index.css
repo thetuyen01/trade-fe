@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-sans antialiased min-h-screen;
+  }
+
+  a {
+    @apply no-underline;
+  }
+}
+
+/* Add custom styles below this line */
+
+@layer utilities {
+  .no-underline {
+    text-decoration: none !important;
+  }
+}
