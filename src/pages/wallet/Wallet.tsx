@@ -84,7 +84,7 @@ const Wallet = () => {
       const qrLink = `https://api.vietqr.io/MBBANK/${bankInfo.accountNumber}/${
         values.amount
       }/${
-        bankInfoData?.bankInfoUser || "NAPTIEN"
+        "NTP " + bankInfoData?.bankInfoUser || "NAPTIEN"
       }/qronly2.jpg?accountName=${encodeURIComponent(
         bankInfo.accountName || ""
       )}`;
@@ -246,7 +246,8 @@ const Wallet = () => {
                   </p>
                   <p className="mt-1 text-sm">Bank: {bankInfo.bankName}</p>
                   <p className="mt-1 text-sm text-gray-600">
-                    Transfer content: {bankInfoData?.bankInfoUser || "NAPTIEN"}
+                    Transfer content:{" "}
+                    {"NTP " + bankInfoData?.bankInfoUser || "NAPTIEN"}
                   </p>
                 </div>
               </div>
