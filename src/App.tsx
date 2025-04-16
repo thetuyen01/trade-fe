@@ -26,6 +26,7 @@ import Transactions from "./pages/transactions/Transactions";
 
 // Shared Components
 import ProtectedRoute from "./components/shared/ProtectedRoute";
+import TokenExpirationChecker from "./components/TokenExpirationChecker";
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -59,6 +60,7 @@ function App() {
         }}
       >
         <AntApp>
+          <TokenExpirationChecker />
           <Router>
             <Routes>
               {/* Public Routes */}

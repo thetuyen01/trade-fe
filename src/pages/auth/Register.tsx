@@ -10,7 +10,7 @@ const Register = () => {
   const navigate = useNavigate();
   const { notification } = App.useApp();
   const onFinish = async (values: {
-    name: string;
+    fullName: string;
     email: string;
     password: string;
     confirmPassword: string;
@@ -19,16 +19,12 @@ const Register = () => {
     clearError();
 
     try {
-      await register(
-        values.name,
-        values.email,
-        values.password,
-        values.confirmPassword
-      );
+      await register(values.fullName, values.email, values.password);
+
       notification.success({
         message: "Registration successful!",
       });
-      navigate("/packages");
+      navigate("/login");
     } catch {
       // Error is already handled in auth store
       notification.error({
@@ -62,7 +58,7 @@ const Register = () => {
           requiredMark={false}
         >
           <Form.Item
-            name="name"
+            name="fullName"
             label="Full Name"
             rules={[{ required: true, message: "Please enter your name" }]}
           >

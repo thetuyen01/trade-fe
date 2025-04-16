@@ -3,7 +3,7 @@ import { authService } from "../services/auth";
 
 interface User {
   id: string;
-  name: string;
+  fullName: string;
   email: string;
 }
 
@@ -14,14 +14,14 @@ interface AuthState {
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (
-    name: string,
+    fullName: string,
     email: string,
-    password: string,
-    passwordConfirmation: string
-  ) => Promise<void>;
+    password: string
+  ) => Promise<{ status: number; message: string }>;
   logout: () => Promise<void>;
   fetchUser: () => Promise<void>;
   clearError: () => void;
+  checkTokenExpiration: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -43,26 +43,21 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  register: async (
-    name: string,
-    email: string,
-    password: string,
-    passwordConfirmation: string
-  ) => {
+  register: async (fullName: string, email: string, password: string) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await authService.register({
-        name,
+      await authService.register({
+        fullName: fullName,
         email,
         password,
-        passwordConfirmation,
       });
-      authService.saveToken(response.access_token);
-      set({ user: response.user, isAuthenticated: true, isLoading: false });
+      set({ isLoading: false });
+      return { status: 201, message: "Registration successful" };
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Registration failed";
       set({ error: errorMessage, isLoading: false });
+      throw error;
     }
   },
 
@@ -86,9 +81,17 @@ export const useAuthStore = create<AuthState>((set) => ({
       const user = await authService.getCurrentUser();
       set({ user, isAuthenticated: true, isLoading: false });
     } catch {
+      authService.removeToken();
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
 
   clearError: () => set({ error: null }),
+
+  checkTokenExpiration: () => {
+    if (authService.isTokenExpired()) {
+      authService.removeToken();
+      set({ user: null, isAuthenticated: false });
+    }
+  },
 }));

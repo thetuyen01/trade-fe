@@ -1,4 +1,5 @@
 import axios from "axios";
+import { authService } from "./auth";
 
 // Create a base API instance
 const api = axios.create({
@@ -9,7 +10,7 @@ const api = axios.create({
   },
 });
 
-// Request interceptor for adding auth token localStorage.getItem("access_token")
+// Request interceptor for adding auth token
 api.interceptors.request.use(
   (config) => {
     const publicEndpoints = ["/auth/login", "/auth/register", "/products"];
@@ -18,7 +19,7 @@ api.interceptors.request.use(
       return config;
     }
 
-    const token = localStorage.getItem("access_token");
+    const token = authService.getToken();
     if (token) {
       console.log(`Adding Authorization header for URL: ${config.url}`);
       config.headers.Authorization = `Bearer ${token}`;
@@ -53,8 +54,7 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       // Clear token and notify about unauthorized access
       console.log("Unauthorized access detected, clearing tokens");
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("user");
+      authService.removeToken();
     }
     return Promise.reject(error);
   }

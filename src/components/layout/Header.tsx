@@ -193,7 +193,7 @@ const Header = () => {
                     className="bg-blue-500"
                   />
                   <span className="hidden md:inline font-medium text-gray-700">
-                    {user?.name || "User"}
+                    {user?.fullName || "User"}
                   </span>
                   <DownOutlined className="text-xs text-gray-500" />
                 </a>
