@@ -45,7 +45,7 @@ export const packagesService = {
     return response.data;
   },
 
-  async purchasePackage(packageId: string): Promise<PurchasePackageResponse> {
+  async purchasePackage(packageId: number): Promise<PurchasePackageResponse> {
     const response = await api.post("/packages/purchase", { packageId });
     return response.data;
   },

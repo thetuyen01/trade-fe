@@ -99,9 +99,7 @@ const Packages = () => {
     setPurchasingId(packageId);
 
     try {
-      const response = await packagesService.purchasePackage(
-        packageId.toString()
-      );
+      const response = await packagesService.purchasePackage(packageId);
       if (response.status === 201) {
         notification.success({
           message: "Package purchased successfully!",
