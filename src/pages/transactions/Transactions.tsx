@@ -79,7 +79,7 @@ const Transactions = () => {
   };
 
   const getTypeColor = (type: string) => {
-    return type === "deposit" ? "blue" : "orange";
+    return type === "deposit" ? "orange" : "blue";
   };
 
   const formatAmount = (amount: number, type: string) => {
@@ -89,8 +89,8 @@ const Transactions = () => {
     }).format(amount);
 
     return (
-      <span className={type === "deposit" ? "text-green-600" : "text-red-600"}>
-        {type === "deposit" ? "+" : "-"}
+      <span className={type === "deposit" ? "text-red-600" : "text-green-600"}>
+        {type === "deposit" ? "-" : "+"}
         {formattedAmount}
       </span>
     );

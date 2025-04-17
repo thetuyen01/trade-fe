@@ -1,0 +1,35 @@
+.tradingview-container {
+    height: 600px;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    border-radius: 4px;
+    border: 1px solid #e0e3eb;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Ensure the chart fills its container */
+  .tradingview-container iframe,
+  .tradingview-container > div {
+    height: 100% !important;
+    width: 100% !important;
+  }
+  
+  /* Mobile responsive settings */
+  @media (max-width: 768px) {
+    .tradingview-container {
+      height: 400px;
+    }
+  }
+  
+  /* Add custom styles for TradingView elements if needed */
+  .tradingview-container .chart-markup-table {
+    border-collapse: collapse;
+  }
+  
+  /* Ensure loading state has proper visibility */
+  .tradingview-container.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }

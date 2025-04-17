@@ -23,6 +23,8 @@ import Packages from "./pages/packages/Packages";
 import MyPackages from "./pages/packages/MyPackages";
 import Wallet from "./pages/wallet/Wallet";
 import Transactions from "./pages/transactions/Transactions";
+import TradingView from "./pages/trading-view/TradingView";
+import TradingViewSymbol from "./pages/trading-view/TradingViewSymbol";
 
 // Shared Components
 import ProtectedRoute from "./components/shared/ProtectedRoute";
@@ -72,6 +74,8 @@ function App() {
               <Route element={<ProtectedRoute />}>
                 <Route element={<MainLayout />}>
                   <Route path="/" element={<Packages />} />
+                  <Route path="/trading-view" element={<TradingView />} />
+                  <Route path="/trading-view/:symbol" element={<TradingViewSymbol />} />
                   <Route path="/packages" element={<Packages />} />
                   <Route path="/my-packages" element={<MyPackages />} />
                   <Route path="/wallet" element={<Wallet />} />
