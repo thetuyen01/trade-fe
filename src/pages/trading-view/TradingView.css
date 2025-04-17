@@ -1,35 +1,295 @@
 .tradingview-container {
-    height: 600px;
-    width: 100%;
-    position: relative;
-    overflow: hidden;
-    border-radius: 4px;
-    border: 1px solid #e0e3eb;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  height: 600px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+  border: 1px solid #2a2e39;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  background-color: #131722;
+}
+
+/* Ensure the chart fills its container */
+.tradingview-container iframe,
+.tradingview-container > div {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+/* Mobile responsive settings */
+@media (max-width: 768px) {
+  .tradingview-container {
+    height: 400px;
   }
-  
-  /* Ensure the chart fills its container */
-  .tradingview-container iframe,
-  .tradingview-container > div {
-    height: 100% !important;
-    width: 100% !important;
+}
+
+/* Add custom styles for TradingView elements if needed */
+.tradingview-container .chart-markup-table {
+  border-collapse: collapse;
+}
+
+/* Ensure loading state has proper visibility */
+.tradingview-container.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.symbol-list-item {
+  transition: background-color 0.3s;
+}
+
+.symbol-list-item:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.chart-controls {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(19, 23, 34, 0.7);
+  z-index: 10;
+}
+
+/* Trading tabs */
+.trading-tabs {
+  margin-bottom: 16px;
+}
+
+/* Trading form styles */
+.trading-form {
+  margin-top: 16px;
+}
+
+.trade-type-selector {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 576px) {
+  .form-row {
+    grid-template-columns: 1fr;
   }
-  
-  /* Mobile responsive settings */
-  @media (max-width: 768px) {
-    .tradingview-container {
-      height: 400px;
-    }
-  }
-  
-  /* Add custom styles for TradingView elements if needed */
-  .tradingview-container .chart-markup-table {
-    border-collapse: collapse;
-  }
-  
-  /* Ensure loading state has proper visibility */
-  .tradingview-container.loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+}
+
+/* Buy/Sell button styles */
+.buy-button {
+  background-color: #00a781 !important;
+  border-color: #00a781 !important;
+  color: white !important;
+}
+
+.buy-button:hover,
+.buy-button:focus {
+  background-color: #00bf92 !important;
+  border-color: #00bf92 !important;
+}
+
+.sell-button {
+  background-color: #ff4a68 !important;
+  border-color: #ff4a68 !important;
+  color: white !important;
+}
+
+.sell-button:hover,
+.sell-button:focus {
+  background-color: #ff3355 !important;
+  border-color: #ff3355 !important;
+}
+
+/* Chart container */
+.chart-container {
+  position: relative;
+}
+
+/* Current price display */
+.current-price {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #3eb489;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Dark theme styles */
+.trading-dark-theme {
+  background-color: #131722;
+  color: #d1d4dc;
+}
+
+.trading-card {
+  background-color: #1e222d;
+  border-color: #2a2e39;
+}
+
+.symbol-list {
+  background-color: #1e222d;
+}
+
+.symbol-list-item {
+  border-bottom: 1px solid #2a2e39 !important;
+}
+
+.trading-tabs .ant-tabs-nav::before {
+  border-bottom-color: #2a2e39 !important;
+}
+
+.trading-tabs .ant-tabs-tab {
+  color: #848e9c !important;
+}
+
+.trading-tabs .ant-tabs-tab-active {
+  color: #f0b90b !important;
+}
+
+.trading-tabs .ant-tabs-ink-bar {
+  background-color: #f0b90b !important;
+}
+
+/* Top symbols bar */
+.top-symbols-bar {
+  display: flex;
+  overflow-x: auto;
+  background-color: #131722;
+  border-bottom: 1px solid #2a2e39;
+  padding: 8px 16px;
+  gap: 16px;
+  margin-bottom: 16px;
+  white-space: nowrap;
+}
+
+.symbol-item {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.symbol-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.symbol-name {
+  font-weight: 500;
+  color: #d1d4dc;
+}
+
+.symbol-price {
+  color: #848e9c;
+}
+
+.symbol-price.up {
+  color: #00a781;
+}
+
+.symbol-price.down {
+  color: #ff4a68;
+}
+
+/* Side panel styles */
+.side-panel {
+  background-color: #1e222d;
+  border-radius: 4px;
+  border: 1px solid #2a2e39;
+}
+
+.side-panel-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #2a2e39;
+  font-weight: 500;
+}
+
+.symbol-search-input {
+  background-color: #2a2e39 !important;
+  border-color: #2a2e39 !important;
+  color: #d1d4dc !important;
+}
+
+.symbol-search-input::placeholder {
+  color: #848e9c;
+}
+
+/* Price indicators */
+.price-indicator {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background-color: #131722;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.price-indicator .label {
+  color: #848e9c;
+}
+
+.price-indicator .value {
+  font-weight: 500;
+}
+
+.price-indicator .up {
+  color: #00a781;
+}
+
+.price-indicator .down {
+  color: #ff4a68;
+}
+
+/* Order form */
+.order-panel {
+  background-color: #1e222d;
+  border: 1px solid #2a2e39;
+  border-radius: 4px;
+  padding: 16px;
+}
+
+.order-tabs {
+  display: flex;
+  margin-bottom: 16px;
+}
+
+.order-tab {
+  flex: 1;
+  text-align: center;
+  padding: 8px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.order-tab.active {
+  border-bottom-color: #f0b90b;
+  color: #f0b90b;
+}
+
+.order-input {
+  background-color: #2a2e39 !important;
+  border-color: #2a2e39 !important;
+  color: #d1d4dc !important;
+}
+
+.order-label {
+  color: #848e9c;
+  margin-bottom: 4px;
+}

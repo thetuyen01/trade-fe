@@ -26,6 +26,7 @@ export interface UserPackage {
 interface PurchasePackageResponse {
   status: number;
   message: string;
+  userPackageId?: string; // ID của user package sau khi mua thành công
 }
 
 export const packagesService = {

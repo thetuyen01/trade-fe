@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Row, Col, Card, Button, Tag, App } from "antd";
 import { ShoppingCartOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { packagesService, Package } from "../../services/packages";
 import LoadingSpinner from "../../components/shared/LoadingSpinner";
 import ErrorMessage from "../../components/shared/ErrorMessage";
@@ -9,6 +10,8 @@ import ErrorMessage from "../../components/shared/ErrorMessage";
 const Packages = () => {
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
   const { notification } = App.useApp();
+  const navigate = useNavigate();
+
   const {
     data: packages,
     isLoading,
@@ -23,20 +26,24 @@ const Packages = () => {
 
     try {
       const response = await packagesService.purchasePackage(packageId);
-      console.log(response);
       if (response.status === 201) {
         notification.success({
           message: "Package purchased successfully!",
+          description: "Connect your MT4/MT5 account to start trading",
         });
+
+        // Chuyển hướng đến trang My Packages với marker để biết là vừa mua xong
+        navigate("/my-packages?newPurchase=true");
       } else {
         notification.error({
           message: "Failed to purchase package",
+          description: response.message,
         });
       }
-    } catch {
+    } catch (error) {
       notification.error({
-        message:
-          "Failed to purchase package. Please check your wallet balance.",
+        message: "Failed to purchase package",
+        description: "Please check your wallet balance.",
       });
     } finally {
       setPurchasingId(null);

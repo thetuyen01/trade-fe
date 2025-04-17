@@ -12,6 +12,7 @@ import {
   ShoppingOutlined,
   HistoryOutlined,
   HomeOutlined,
+  LineChartOutlined,
 } from "@ant-design/icons";
 import { useAuthStore } from "../../store/authStore";
 import { useWalletStore } from "../../store/walletStore";
@@ -89,6 +90,12 @@ const Header = () => {
       path: "/",
     },
     {
+      key: "trading-view",
+      icon: <LineChartOutlined />,
+      label: "Charts",
+      path: "/trading-view",
+    },
+    {
       key: "packages",
       icon: <AppstoreOutlined />,
       label: "Packages",
@@ -129,7 +136,7 @@ const Header = () => {
             <span className="bg-blue-600 text-white p-2 rounded-lg mr-2 hidden sm:flex">
               TA
             </span>
-            <span className="transition-all duration-300">Trade App</span>
+            <span className="transition-all duration-300">AI Bot Trade</span>
           </Link>
 
           {isAuthenticated && (
