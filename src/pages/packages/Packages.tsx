@@ -1,24 +1,99 @@
 import { useState } from "react";
-import { Row, Col, Card, Button, Tag, App } from "antd";
-import { ShoppingCartOutlined, CheckCircleOutlined } from "@ant-design/icons";
+import { Row, Col, Card, Button, Tag, App, Typography, Badge } from "antd";
+import {
+  ShoppingCartOutlined,
+  CheckCircleOutlined,
+  RobotOutlined,
+  LineChartOutlined,
+  UserSwitchOutlined,
+  SettingOutlined,
+  SendOutlined,
+  CustomerServiceOutlined,
+  CrownOutlined,
+  StarOutlined,
+} from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { packagesService, Package } from "../../services/packages";
+import { packagesService } from "../../services/packages";
 import LoadingSpinner from "../../components/shared/LoadingSpinner";
 import ErrorMessage from "../../components/shared/ErrorMessage";
+
+const { Title, Text } = Typography;
+
+// Predefined packages
+const PREDEFINED_PACKAGES = [
+  {
+    id: "package-1",
+    name: "Basic Package",
+    price: 500000,
+    duration: 30,
+    tag: "Starter",
+    tagColor: "blue",
+    description: "Perfect for beginners who want to start trading manually",
+    features: [
+      { title: "TRADE TAY", icon: <LineChartOutlined /> },
+      {
+        title: "HỖ TRỢ CHĂM SÓC KHÁCH HÀNG",
+        icon: <CustomerServiceOutlined />,
+      },
+    ],
+    popular: false,
+    color: "#1890ff",
+  },
+  {
+    id: "package-2",
+    name: "Professional Package",
+    price: 1000000,
+    duration: 30,
+    tag: "Popular",
+    tagColor: "green",
+    description: "Intermediate package with essential trading features",
+    features: [
+      { title: "TRADE TAY", icon: <LineChartOutlined /> },
+      { title: "VIẾT PHƯƠNG PHÁP THEO Ý MUỐN", icon: <SettingOutlined /> },
+      { title: "COPYTRADE", icon: <UserSwitchOutlined /> },
+      {
+        title: "HỖ TRỢ CHĂM SÓC KHÁCH HÀNG",
+        icon: <CustomerServiceOutlined />,
+      },
+    ],
+    popular: true,
+    color: "#52c41a",
+  },
+  {
+    id: "package-3",
+    name: "Premium Package",
+    price: 2000000,
+    duration: 30,
+    tag: "Full Features",
+    tagColor: "gold",
+    description: "Complete set of advanced trading features for professionals",
+    features: [
+      { title: "TRADE TAY", icon: <LineChartOutlined /> },
+      { title: "VIẾT PHƯƠNG PHÁP THEO Ý MUỐN", icon: <SettingOutlined /> },
+      { title: "COPYTRADE", icon: <UserSwitchOutlined /> },
+      { title: "TẠO CẤU HÌNH TỪ TRADINGVIEW", icon: <LineChartOutlined /> },
+      { title: "BẢN TÍN HIỆU LÊN TELEGRAM", icon: <SendOutlined /> },
+      { title: "TỰ ĐỘNG GIAO DỊCH, TỰ ĐỘNG TP-SL", icon: <RobotOutlined /> },
+      {
+        title: "HỖ TRỢ CHĂM SÓC KHÁCH HÀNG",
+        icon: <CustomerServiceOutlined />,
+      },
+    ],
+    popular: false,
+    color: "#faad14",
+  },
+];
 
 const Packages = () => {
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
   const { notification } = App.useApp();
   const navigate = useNavigate();
 
-  const {
-    data: packages,
-    isLoading,
-    error,
-  } = useQuery({
+  const { isLoading, error } = useQuery({
     queryKey: ["packages"],
     queryFn: () => packagesService.getAllPackages(),
+    enabled: false, // Disable the automatic fetching since we're using predefined packages
   });
 
   const handlePurchase = async (packageId: string) => {
@@ -32,7 +107,6 @@ const Packages = () => {
           description: "Connect your MT4/MT5 account to start trading",
         });
 
-        // Chuyển hướng đến trang My Packages với marker để biết là vừa mua xong
         navigate("/my-packages?newPurchase=true");
       } else {
         notification.error({
@@ -65,55 +139,91 @@ const Packages = () => {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Available Packages</h1>
-        <p className="text-gray-600">
-          Choose the package that best fits your trading needs
-        </p>
+      <div className="mb-8 text-center">
+        <Title level={2}>
+          <CrownOutlined className="mr-2 text-yellow-500" />
+          Premium Trading Packages
+        </Title>
+        <Text className="text-gray-600 text-lg">
+          Choose the package that best fits your trading strategy and unlock
+          powerful features
+        </Text>
       </div>
 
-      <Row gutter={[16, 16]}>
-        {packages?.map((pkg: Package) => (
-          <Col key={pkg.id} xs={24} sm={12} md={8} lg={8}>
-            <Card
-              className="h-full flex flex-col"
-              title={<span className="text-lg font-bold">{pkg.name}</span>}
-              extra={<Tag color="blue">{`${pkg.duration} days`}</Tag>}
-              actions={[
-                <Button
-                  key="buy"
-                  type="primary"
-                  icon={<ShoppingCartOutlined />}
-                  loading={purchasingId === pkg.id}
-                  onClick={() => handlePurchase(pkg.id)}
-                  block
-                >
-                  Buy Now
-                </Button>,
-              ]}
+      <Row gutter={[24, 24]} justify="center">
+        {PREDEFINED_PACKAGES.map((pkg) => (
+          <Col key={pkg.id} xs={24} sm={24} md={8} lg={8}>
+            <Badge.Ribbon
+              text={pkg.tag}
+              color={pkg.tagColor}
+              style={{ display: pkg.popular ? "block" : "none" }}
             >
-              <div className="flex-grow">
-                <div className="text-2xl font-bold text-blue-600 mb-4">
-                  {new Intl.NumberFormat("vi-VN", {
-                    style: "currency",
-                    currency: "VND",
-                  }).format(pkg.price)}
-                </div>
+              <Card
+                hoverable
+                className="h-full flex flex-col overflow-hidden"
+                style={{
+                  borderTop: `4px solid ${pkg.color}`,
+                  boxShadow: pkg.popular
+                    ? "0 8px 16px rgba(0,0,0,0.1)"
+                    : "0 2px 8px rgba(0,0,0,0.05)",
+                }}
+                title={
+                  <div className="flex items-center justify-between">
+                    <span className="text-xl font-bold">{pkg.name}</span>
+                    <Tag color={pkg.tagColor}>{`${pkg.duration} ngày`}</Tag>
+                  </div>
+                }
+                actions={[
+                  <Button
+                    key="buy"
+                    type="primary"
+                    size="large"
+                    icon={<ShoppingCartOutlined />}
+                    loading={purchasingId === pkg.id}
+                    onClick={() => handlePurchase(pkg.id)}
+                    block
+                    style={{ backgroundColor: pkg.color }}
+                  >
+                    Mua Ngay
+                  </Button>,
+                ]}
+              >
+                <div className="flex-grow">
+                  <div
+                    className="text-3xl font-bold mb-6 text-center"
+                    style={{ color: pkg.color }}
+                  >
+                    {new Intl.NumberFormat("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    }).format(pkg.price)}
+                  </div>
 
-                <p className="mb-4 text-gray-600">{pkg.description}</p>
+                  <p className="mb-6 text-gray-600 text-center">
+                    {pkg.description}
+                  </p>
 
-                <h4 className="font-bold mb-2">Benefits:</h4>
-                <ul className="space-y-1">
-                  {pkg.benefits &&
-                    pkg.benefits.map((benefit, index) => (
+                  <div className="mb-3 flex items-center">
+                    <StarOutlined className="text-yellow-500 mr-2" />
+                    <Text strong>Tính năng bao gồm:</Text>
+                  </div>
+
+                  <ul className="space-y-2 mb-4">
+                    {pkg.features.map((feature, index) => (
                       <li key={index} className="flex items-start">
-                        <CheckCircleOutlined className="text-green-500 mr-2 mt-1" />
-                        <span>{benefit}</span>
+                        <div
+                          className="mr-3 text-lg"
+                          style={{ color: pkg.color }}
+                        >
+                          {feature.icon}
+                        </div>
+                        <Text>{feature.title}</Text>
                       </li>
                     ))}
-                </ul>
-              </div>
-            </Card>
+                  </ul>
+                </div>
+              </Card>
+            </Badge.Ribbon>
           </Col>
         ))}
       </Row>
