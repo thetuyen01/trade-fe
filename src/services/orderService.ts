@@ -46,9 +46,17 @@ const orderService = {
   },
 
   // Create new order
-  createOrder: async (orderData: CreateOrderDto) => {
+  createOrder: async (
+    orderData: CreateOrderDto
+  ): Promise<{
+    status: number;
+    message: string;
+  }> => {
     const response = await api.post<Order>("/orders", orderData);
-    return response.data;
+    return {
+      status: response.status,
+      message: "Order created successfully",
+    };
   },
 
   // Execute order

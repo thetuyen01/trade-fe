@@ -17,24 +17,15 @@ import {
   InputNumber,
   Form,
   Radio,
-  Divider,
-  message,
-  Tooltip,
   Row,
   Col,
   Input,
   Tabs,
   Tag,
   Table,
+  App,
 } from "antd";
-import {
-  ArrowLeftOutlined,
-  ArrowUpOutlined,
-  ArrowDownOutlined,
-  InfoCircleOutlined,
-  SearchOutlined,
-  CloseOutlined,
-} from "@ant-design/icons";
+import { SearchOutlined } from "@ant-design/icons";
 import orderService, { Order } from "../../services/orderService";
 import walletService from "../../services/walletService";
 import "./TradingView.css";
@@ -130,7 +121,7 @@ export function TradingViewSymbol() {
   const [timeFrame, setTimeFrame] = useState<TimeFrame>("1h");
   const [isLoading, setIsLoading] = useState(true);
   const [form] = Form.useForm();
-
+  const { notification } = App.useApp();
   const [chartInstance, setChartInstance] = useState<IChartApi | null>(null);
   const [seriesInstance, setSeriesInstance] = useState<any>(null);
   const [currentPrice, setCurrentPrice] = useState<number>(0);
@@ -167,7 +158,9 @@ export function TradingViewSymbol() {
       setMarketOrders(response.data);
     } catch (error) {
       console.error("Error fetching market orders:", error);
-      message.error("Failed to load market orders");
+      notification.error({
+        message: "Failed to load market orders",
+      });
     } finally {
       setLoadingOrders(false);
     }
@@ -447,22 +440,27 @@ export function TradingViewSymbol() {
         price: orderType === "market" ? currentPrice : values.price,
       };
 
-      await orderService.createOrder(orderData);
+      const response = await orderService.createOrder(orderData);
 
-      message.success(
-        `${tradeType.toUpperCase()} order created successfully for ${symbol} at $${orderData.price.toFixed(
-          2
-        )}`
-      );
+      if (response.status === 201) {
+        notification.success({
+          message: response.message,
+        });
+        fetchUserOrders();
+        fetchWallet();
 
-      // Refresh user orders and wallet
-      fetchUserOrders();
-      fetchWallet();
-
-      form.resetFields(["amount", "stopLoss", "takeProfit"]);
+        form.resetFields(["amount", "stopLoss", "takeProfit"]);
+      } else {
+        notification.error({
+          message: response.message,
+        });
+      }
     } catch (error) {
+      // Refresh user orders and wallet
       console.error("Error creating order:", error);
-      message.error("Failed to create order");
+      notification.error({
+        message: "Failed to create order",
+      });
     } finally {
       setExecuting(false);
     }
@@ -473,7 +471,9 @@ export function TradingViewSymbol() {
     try {
       await orderService.executeOrder(orderId);
 
-      message.success("Order executed successfully");
+      notification.success({
+        message: "Order executed successfully",
+      });
 
       // Refresh orders and wallet
       fetchMarketOrders();
@@ -481,7 +481,9 @@ export function TradingViewSymbol() {
       fetchWallet();
     } catch (error) {
       console.error("Error executing order:", error);
-      message.error("Failed to execute order");
+      notification.error({
+        message: "Failed to execute order",
+      });
     }
   };
 
@@ -490,14 +492,18 @@ export function TradingViewSymbol() {
     try {
       await orderService.cancelOrder(orderId);
 
-      message.success("Order canceled successfully");
+      notification.success({
+        message: "Order canceled successfully",
+      });
 
       // Refresh orders and wallet
       fetchUserOrders();
       fetchWallet();
     } catch (error) {
       console.error("Error canceling order:", error);
-      message.error("Failed to cancel order");
+      notification.error({
+        message: "Failed to cancel order",
+      });
     }
   };
 
