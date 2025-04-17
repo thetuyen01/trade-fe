@@ -23,7 +23,7 @@ const { Title, Text } = Typography;
 // Predefined packages
 const PREDEFINED_PACKAGES = [
   {
-    id: "package-1",
+    id: "1",
     name: "Basic Package",
     price: 500000,
     duration: 30,
@@ -41,7 +41,7 @@ const PREDEFINED_PACKAGES = [
     color: "#1890ff",
   },
   {
-    id: "package-2",
+    id: "2",
     name: "Professional Package",
     price: 1000000,
     duration: 30,
@@ -61,7 +61,7 @@ const PREDEFINED_PACKAGES = [
     color: "#52c41a",
   },
   {
-    id: "package-3",
+    id: "3",
     name: "Premium Package",
     price: 2000000,
     duration: 30,
