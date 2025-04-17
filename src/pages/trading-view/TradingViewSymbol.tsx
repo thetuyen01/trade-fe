@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   createChart,
@@ -136,6 +136,10 @@ export function TradingViewSymbol() {
   const [orderType, setOrderType] = useState<OrderType>("market");
   const [executing, setExecuting] = useState(false);
   const [balance, setBalance] = useState(10000);
+  const [isChartDisposed, setIsChartDisposed] = useState(false);
+
+  // Create a ref to store the resize handler
+  const resizeHandlerRef = useRef<((event: UIEvent) => void) | null>(null);
 
   // Handle going back to symbol list
   const handleBack = () => {
@@ -144,78 +148,139 @@ export function TradingViewSymbol() {
 
   // Initialize chart
   useEffect(() => {
+    // Don't initialize if we're about to dispose or container isn't ready
     if (!chartContainerRef.current || !symbol) return;
+
+    // Create chart ref to track in closure
+    let isComponentMounted = true;
+
+    // Reset the disposed flag when creating a new chart
+    setIsChartDisposed(false);
 
     // Clean up previous chart if exists
     if (chartInstance) {
-      chartInstance.remove();
+      try {
+        chartInstance.remove();
+      } catch (error) {
+        console.error("Error removing previous chart:", error);
+      }
     }
 
+    let chart: IChartApi | null = null;
     const container = chartContainerRef.current;
-    const chart = createChart(container, {
-      width: container.clientWidth,
-      height: 500,
-      layout: {
-        background: { color: "#131722" },
-        textColor: "#d1d4dc",
-      },
-      grid: {
-        vertLines: { color: "#1f2937" },
-        horzLines: { color: "#1f2937" },
-      },
-      timeScale: {
-        borderColor: "#2a2e39",
-        timeVisible: true,
-        secondsVisible: false,
-      },
-      crosshair: {
-        mode: 0,
-        vertLine: {
-          color: "#758696",
-          width: 1,
-          style: 1,
-          visible: true,
-          labelVisible: false,
-        },
-        horzLine: {
-          color: "#758696",
-          width: 1,
-          style: 1,
-          visible: true,
-          labelVisible: true,
-        },
-      },
-    });
 
-    // Make chart responsive
-    const handleResize = () => {
-      if (container && chart) {
-        chart.applyOptions({ width: container.clientWidth });
+    try {
+      chart = createChart(container, {
+        width: container.clientWidth,
+        height: 500,
+        layout: {
+          background: { color: "#131722" },
+          textColor: "#d1d4dc",
+        },
+        grid: {
+          vertLines: { color: "#1f2937" },
+          horzLines: { color: "#1f2937" },
+        },
+        timeScale: {
+          borderColor: "#2a2e39",
+          timeVisible: true,
+          secondsVisible: false,
+        },
+        crosshair: {
+          mode: 0,
+          vertLine: {
+            color: "#758696",
+            width: 1,
+            style: 1,
+            visible: true,
+            labelVisible: false,
+          },
+          horzLine: {
+            color: "#758696",
+            width: 1,
+            style: 1,
+            visible: true,
+            labelVisible: true,
+          },
+        },
+      });
+
+      // Create resize handler
+      const handleResize = () => {
+        if (container && chart && !isChartDisposed && isComponentMounted) {
+          try {
+            chart.applyOptions({ width: container.clientWidth });
+          } catch (error) {
+            console.error("Error resizing chart:", error);
+          }
+        }
+      };
+
+      // Store in ref for cleanup
+      resizeHandlerRef.current = handleResize;
+
+      window.addEventListener("resize", handleResize);
+
+      if (isComponentMounted) {
+        setChartInstance(chart);
       }
-    };
-
-    window.addEventListener("resize", handleResize);
-    setChartInstance(chart);
+    } catch (error) {
+      console.error("Error creating chart:", error);
+    }
 
     return () => {
-      window.removeEventListener("resize", handleResize);
-      chart.remove();
+      isComponentMounted = false;
+
+      // Clean up event listener
+      if (resizeHandlerRef.current) {
+        window.removeEventListener("resize", resizeHandlerRef.current);
+        resizeHandlerRef.current = null;
+      }
+
+      setIsChartDisposed(true);
+
+      if (chart) {
+        try {
+          chart.remove();
+        } catch (error) {
+          console.error("Error removing chart on cleanup:", error);
+        }
+      }
+
+      // Set references to null to help garbage collection
+      setChartInstance(null);
+      setSeriesInstance(null);
     };
   }, [symbol]);
 
   // Update chart when chartType or timeFrame changes
   useEffect(() => {
-    if (!chartInstance || !symbol) return;
+    if (!chartInstance || !symbol || isChartDisposed) return;
+
+    // Track if the effect is still active
+    let isEffectActive = true;
 
     // Remove previous series if exists
     if (seriesInstance) {
-      chartInstance.removeSeries(seriesInstance);
+      try {
+        chartInstance.removeSeries(seriesInstance);
+      } catch (error) {
+        console.error("Error removing series:", error);
+        return;
+      }
     }
 
     setIsLoading(true);
 
     // Simulate API data loading
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
+      // Check if effect is still active
+      if (!isEffectActive || isChartDisposed) {
+        console.log("Chart update cancelled - component changed or disposed");
+        setIsLoading(false);
+        return;
+      }
+
       // Map timeframes to days for sample data
       const daysMap: Record<TimeFrame, number> = {
         "1m": 1,
@@ -228,57 +293,99 @@ export function TradingViewSymbol() {
         "1W": 180,
       };
 
-      const candleData = generateSampleData(symbol, daysMap[timeFrame]);
-      setChartData(candleData);
-      setCurrentPrice(getCurrentPrice(candleData));
+      try {
+        // Check again if chart is disposed before proceeding
+        if (!chartInstance || isChartDisposed) {
+          setIsLoading(false);
+          return;
+        }
 
-      let newSeries;
+        const candleData = generateSampleData(symbol, daysMap[timeFrame]);
 
-      if (chartType === "candles") {
-        newSeries = chartInstance.addSeries(CandlestickSeries);
-        newSeries.applyOptions({
-          upColor: "#00a781",
-          downColor: "#ff4a68",
-          borderVisible: false,
-          wickUpColor: "#00a781",
-          wickDownColor: "#ff4a68",
-        });
-        newSeries.setData(candleData);
-      } else if (chartType === "line") {
-        newSeries = chartInstance.addSeries(LineSeries);
-        newSeries.applyOptions({
-          color: "#2962FF",
-          lineWidth: 2,
-        });
-        // Convert candle data to line data
-        const lineData = candleData.map((item) => ({
-          time: item.time,
-          value: item.close,
-        }));
-        newSeries.setData(lineData);
-      } else if (chartType === "area") {
-        newSeries = chartInstance.addSeries(AreaSeries);
-        newSeries.applyOptions({
-          topColor: "rgba(41, 98, 255, 0.28)",
-          bottomColor: "rgba(41, 98, 255, 0.05)",
-          lineColor: "rgba(41, 98, 255, 1)",
-          lineWidth: 2,
-        });
-        // Convert candle data to line/area data
-        const areaData = candleData.map((item) => ({
-          time: item.time,
-          value: item.close,
-        }));
-        newSeries.setData(areaData);
+        if (isEffectActive) {
+          setChartData(candleData);
+          setCurrentPrice(getCurrentPrice(candleData));
+        }
+
+        // Check again before creating series
+        if (!chartInstance || isChartDisposed || !isEffectActive) {
+          setIsLoading(false);
+          return;
+        }
+
+        let newSeries;
+
+        if (chartType === "candles") {
+          newSeries = chartInstance.addSeries(CandlestickSeries);
+          newSeries.applyOptions({
+            upColor: "#00a781",
+            downColor: "#ff4a68",
+            borderVisible: false,
+            wickUpColor: "#00a781",
+            wickDownColor: "#ff4a68",
+          });
+          newSeries.setData(candleData);
+        } else if (chartType === "line") {
+          newSeries = chartInstance.addSeries(LineSeries);
+          newSeries.applyOptions({
+            color: "#2962FF",
+            lineWidth: 2,
+          });
+          // Convert candle data to line data
+          const lineData = candleData.map((item) => ({
+            time: item.time,
+            value: item.close,
+          }));
+          newSeries.setData(lineData);
+        } else if (chartType === "area") {
+          newSeries = chartInstance.addSeries(AreaSeries);
+          newSeries.applyOptions({
+            topColor: "rgba(41, 98, 255, 0.28)",
+            bottomColor: "rgba(41, 98, 255, 0.05)",
+            lineColor: "rgba(41, 98, 255, 1)",
+            lineWidth: 2,
+          });
+          // Convert candle data to line/area data
+          const areaData = candleData.map((item) => ({
+            time: item.time,
+            value: item.close,
+          }));
+          newSeries.setData(areaData);
+        }
+
+        // Check if still active before updating state
+        if (isEffectActive) {
+          setSeriesInstance(newSeries);
+
+          // Fit content to view
+          if (chartInstance && !isChartDisposed) {
+            chartInstance.timeScale().fitContent();
+          }
+        }
+      } catch (error) {
+        console.error("Error updating chart:", error);
+      } finally {
+        if (isEffectActive) {
+          setIsLoading(false);
+        }
       }
-
-      setSeriesInstance(newSeries);
-
-      // Fit content to view
-      chartInstance.timeScale().fitContent();
-      setIsLoading(false);
     }, 500); // Simulate network delay
-  }, [chartInstance, chartType, symbol, timeFrame]);
+
+    return () => {
+      // Mark effect as inactive
+      isEffectActive = false;
+      clearTimeout(timeoutId);
+
+      // Clean up series to prevent memory leaks
+      if (seriesInstance && chartInstance && !isChartDisposed) {
+        try {
+          chartInstance.removeSeries(seriesInstance);
+        } catch (error) {
+          console.error("Error cleaning up series on effect cleanup:", error);
+        }
+      }
+    };
+  }, [chartInstance, chartType, symbol, timeFrame, isChartDisposed]);
 
   // Form submission handler for trade execution
   const handleTrade = async (values: any) => {
@@ -298,7 +405,23 @@ export function TradingViewSymbol() {
 
   // Handle symbol click in the top bar
   const handleSymbolClick = (symbolName: string) => {
-    navigate(`/trading-view/${symbolName}`);
+    // If clicking the same symbol, don't navigate to prevent re-renders
+    if (symbolName === symbol) return;
+
+    try {
+      // Set disposed flag to prevent further operations
+      setIsChartDisposed(true);
+
+      // Wait a moment before navigating to ensure proper cleanup
+      requestAnimationFrame(() => {
+        // Navigate to the new symbol
+        navigate(`/trading-view/${symbolName}`);
+      });
+    } catch (error) {
+      console.error("Error navigating to symbol:", error);
+      // Try basic navigation if the above fails
+      navigate(`/trading-view/${symbolName}`);
+    }
   };
 
   if (!symbol) {
