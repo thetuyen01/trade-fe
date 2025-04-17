@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Row, Col, Card, Button, Tag, App, Typography, Badge } from "antd";
 import {
   ShoppingCartOutlined,
-  CheckCircleOutlined,
   RobotOutlined,
   LineChartOutlined,
   UserSwitchOutlined,
@@ -23,7 +22,7 @@ const { Title, Text } = Typography;
 // Predefined packages
 const PREDEFINED_PACKAGES = [
   {
-    id: "1",
+    id: 1,
     name: "Basic Package",
     price: 500000,
     duration: 30,
@@ -41,7 +40,7 @@ const PREDEFINED_PACKAGES = [
     color: "#1890ff",
   },
   {
-    id: "2",
+    id: 2,
     name: "Professional Package",
     price: 1000000,
     duration: 30,
@@ -61,7 +60,7 @@ const PREDEFINED_PACKAGES = [
     color: "#52c41a",
   },
   {
-    id: "3",
+    id: 3,
     name: "Premium Package",
     price: 2000000,
     duration: 30,
@@ -86,7 +85,7 @@ const PREDEFINED_PACKAGES = [
 ];
 
 const Packages = () => {
-  const [purchasingId, setPurchasingId] = useState<string | null>(null);
+  const [purchasingId, setPurchasingId] = useState<number | null>(null);
   const { notification } = App.useApp();
   const navigate = useNavigate();
 
@@ -96,11 +95,13 @@ const Packages = () => {
     enabled: false, // Disable the automatic fetching since we're using predefined packages
   });
 
-  const handlePurchase = async (packageId: string) => {
+  const handlePurchase = async (packageId: number) => {
     setPurchasingId(packageId);
 
     try {
-      const response = await packagesService.purchasePackage(packageId);
+      const response = await packagesService.purchasePackage(
+        packageId.toString()
+      );
       if (response.status === 201) {
         notification.success({
           message: "Package purchased successfully!",
