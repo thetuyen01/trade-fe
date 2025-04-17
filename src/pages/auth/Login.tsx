@@ -19,7 +19,14 @@ const Login = () => {
     clearError();
 
     try {
-      await login(values.email, values.password);
+      const res = await login(values.email, values.password);
+      console.log(res);
+      if (res.status === 200) {
+        notification.success({
+          message: res.message,
+        });
+        navigate("/packages");
+      }
 
       if (values.remember) {
         // If remember me is checked, we could store additional info if needed
@@ -27,11 +34,6 @@ const Login = () => {
       } else {
         localStorage.removeItem("rememberMe");
       }
-
-      notification.success({
-        message: "Login successful!",
-      });
-      navigate("/packages");
     } catch {
       // Error is already handled in auth store
       notification.error({

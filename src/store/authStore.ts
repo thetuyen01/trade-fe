@@ -12,13 +12,19 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (
+    email: string,
+    password: string
+  ) => Promise<{
+    status: number;
+    message: string;
+  }>;
   register: (
     fullName: string,
     email: string,
     password: string
   ) => Promise<{ status: number; message: string }>;
-  logout: () => Promise<void>;
+  logout: () => Promise<{ status: number; message: string }>;
   fetchUser: () => Promise<void>;
   clearError: () => void;
   checkTokenExpiration: () => void;
@@ -36,10 +42,12 @@ export const useAuthStore = create<AuthState>((set) => ({
       const response = await authService.login({ email, password });
       authService.saveToken(response.access_token);
       set({ user: response.user, isAuthenticated: true, isLoading: false });
+      return { status: 200, message: "Login successful" };
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Login failed";
       set({ error: errorMessage, isLoading: false });
+      throw error;
     }
   },
 
@@ -64,12 +72,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     set({ isLoading: true });
     try {
-      await authService.logout();
+      authService.removeToken();
       set({ user: null, isAuthenticated: false, isLoading: false });
+      return { status: 200, message: "Logout successful" };
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Logout failed";
       set({ error: errorMessage, isLoading: false });
+      return { status: 500, message: "Logout failed" };
     }
   },
 

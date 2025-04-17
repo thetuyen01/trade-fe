@@ -19,7 +19,12 @@ const Register = () => {
     clearError();
 
     try {
-      await register(values.fullName, values.email, values.password);
+      const res = await register(
+        values.fullName,
+        values.email,
+        values.password
+      );
+      console.log(res);
 
       notification.success({
         message: "Registration successful!",

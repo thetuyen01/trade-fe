@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Drawer, Menu } from "antd";
+import { Drawer, Menu, App } from "antd";
 import type { MenuProps } from "antd";
 import {
   AppstoreOutlined,
@@ -19,6 +19,7 @@ import { useWalletStore } from "../../store/walletStore";
 
 const Sidebar = () => {
   const [visible, setVisible] = useState(false);
+  const { notification } = App.useApp();
   const { isAuthenticated, logout, user } = useAuthStore();
   const { wallet } = useWalletStore();
   const location = useLocation();
@@ -32,7 +33,13 @@ const Sidebar = () => {
   };
 
   const handleLogout = async () => {
-    await logout();
+    const res = await logout();
+    console.log(res);
+    if (res.status === 200) {
+      notification.success({
+        message: res.message,
+      });
+    }
     setVisible(false);
   };
 
@@ -141,8 +148,10 @@ const Sidebar = () => {
               TA
             </div>
             <div>
-              <div className="font-bold">Trade App</div>
-              {user && <div className="text-sm text-gray-500">{user.name}</div>}
+              <div className="font-bold">AI Bot Trade</div>
+              {user && (
+                <div className="text-sm text-gray-500">{user.fullName}</div>
+              )}
             </div>
           </div>
         }
