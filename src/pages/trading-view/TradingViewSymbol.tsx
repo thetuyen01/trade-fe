@@ -25,6 +25,7 @@ import {
   Input,
   Tabs,
   Tag,
+  Table,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -34,6 +35,8 @@ import {
   SearchOutlined,
   CloseOutlined,
 } from "@ant-design/icons";
+import orderService, { Order } from "../../services/orderService";
+import walletService from "../../services/walletService";
 import "./TradingView.css";
 
 const { Title, Text } = Typography;
@@ -138,8 +141,54 @@ export function TradingViewSymbol() {
   const [balance, setBalance] = useState(10000);
   const [isChartDisposed, setIsChartDisposed] = useState(false);
 
+  // New state for market orders and user orders
+  const [marketOrders, setMarketOrders] = useState<Order[]>([]);
+  const [userOrders, setUserOrders] = useState<Order[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+
   // Create a ref to store the resize handler
   const resizeHandlerRef = useRef<((event: UIEvent) => void) | null>(null);
+
+  // Fetch user wallet
+  const fetchWallet = useCallback(async () => {
+    try {
+      const wallet = await walletService.getWallet();
+      setBalance(wallet.balance);
+    } catch (error) {
+      console.error("Error fetching wallet:", error);
+    }
+  }, []);
+
+  // Fetch market orders
+  const fetchMarketOrders = useCallback(async () => {
+    setLoadingOrders(true);
+    try {
+      const response = await orderService.getMarketOrders(1, 10);
+      setMarketOrders(response.data);
+    } catch (error) {
+      console.error("Error fetching market orders:", error);
+      message.error("Failed to load market orders");
+    } finally {
+      setLoadingOrders(false);
+    }
+  }, []);
+
+  // Fetch user orders
+  const fetchUserOrders = useCallback(async () => {
+    try {
+      const response = await orderService.getUserOrders(1, 10);
+      setUserOrders(response.data);
+    } catch (error) {
+      console.error("Error fetching user orders:", error);
+    }
+  }, []);
+
+  // Load initial data
+  useEffect(() => {
+    fetchWallet();
+    fetchMarketOrders();
+    fetchUserOrders();
+  }, [fetchWallet, fetchMarketOrders, fetchUserOrders]);
 
   // Handle going back to symbol list
   const handleBack = () => {
@@ -391,16 +440,65 @@ export function TradingViewSymbol() {
   const handleTrade = async (values: any) => {
     setExecuting(true);
 
-    // Simulate API call to execute trade
-    setTimeout(() => {
+    try {
+      const orderData = {
+        type: tradeType.toUpperCase() as "BUY" | "SELL",
+        amount: values.amount,
+        price: orderType === "market" ? currentPrice : values.price,
+      };
+
+      await orderService.createOrder(orderData);
+
       message.success(
-        `${tradeType.toUpperCase()} order executed successfully for ${symbol} at $${currentPrice.toFixed(
+        `${tradeType.toUpperCase()} order created successfully for ${symbol} at $${orderData.price.toFixed(
           2
         )}`
       );
-      setExecuting(false);
+
+      // Refresh user orders and wallet
+      fetchUserOrders();
+      fetchWallet();
+
       form.resetFields(["amount", "stopLoss", "takeProfit"]);
-    }, 1500);
+    } catch (error) {
+      console.error("Error creating order:", error);
+      message.error("Failed to create order");
+    } finally {
+      setExecuting(false);
+    }
+  };
+
+  // Handle executing a market order
+  const handleExecuteOrder = async (orderId: number) => {
+    try {
+      await orderService.executeOrder(orderId);
+
+      message.success("Order executed successfully");
+
+      // Refresh orders and wallet
+      fetchMarketOrders();
+      fetchUserOrders();
+      fetchWallet();
+    } catch (error) {
+      console.error("Error executing order:", error);
+      message.error("Failed to execute order");
+    }
+  };
+
+  // Handle canceling an order
+  const handleCancelOrder = async (orderId: number) => {
+    try {
+      await orderService.cancelOrder(orderId);
+
+      message.success("Order canceled successfully");
+
+      // Refresh orders and wallet
+      fetchUserOrders();
+      fetchWallet();
+    } catch (error) {
+      console.error("Error canceling order:", error);
+      message.error("Failed to cancel order");
+    }
   };
 
   // Handle symbol click in the top bar
@@ -434,6 +532,104 @@ export function TradingViewSymbol() {
   };
 
   const showTrading = isForexSymbol(symbol);
+
+  // Market orders table columns
+  const marketOrdersColumns = [
+    {
+      title: "Type",
+      dataIndex: "type",
+      key: "type",
+      render: (type: string) => (
+        <Tag color={type === "BUY" ? "green" : "red"}>{type}</Tag>
+      ),
+    },
+    {
+      title: "Price",
+      dataIndex: "price",
+      key: "price",
+      render: (price: number) => price.toFixed(2),
+    },
+    {
+      title: "Amount",
+      dataIndex: "amount",
+      key: "amount",
+      render: (amount: number) => amount.toFixed(4),
+    },
+    {
+      title: "Total",
+      key: "total",
+      render: (record: Order) => (record.price * record.amount).toFixed(2),
+    },
+    {
+      title: "Action",
+      key: "action",
+      render: (record: Order) => (
+        <Button
+          size="small"
+          type="primary"
+          onClick={() => handleExecuteOrder(record.id)}
+        >
+          Execute
+        </Button>
+      ),
+    },
+  ];
+
+  // User orders table columns
+  const userOrdersColumns = [
+    {
+      title: "Type",
+      dataIndex: "type",
+      key: "type",
+      render: (type: string) => (
+        <Tag color={type === "BUY" ? "green" : "red"}>{type}</Tag>
+      ),
+    },
+    {
+      title: "Price",
+      dataIndex: "price",
+      key: "price",
+      render: (price: number) => price.toFixed(2),
+    },
+    {
+      title: "Amount",
+      dataIndex: "amount",
+      key: "amount",
+      render: (amount: number) => amount.toFixed(4),
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status: string) => (
+        <Tag
+          color={
+            status === "OPEN"
+              ? "blue"
+              : status === "COMPLETED"
+              ? "green"
+              : "red"
+          }
+        >
+          {status}
+        </Tag>
+      ),
+    },
+    {
+      title: "Action",
+      key: "action",
+      render: (record: Order) =>
+        record.status === "OPEN" && (
+          <Button
+            size="small"
+            danger
+            onClick={() => handleCancelOrder(record.id)}
+          >
+            Cancel
+          </Button>
+        ),
+    },
+  ];
 
   return (
     <div className="trading-dark-theme" style={{ padding: "0px" }}>
@@ -605,18 +801,31 @@ export function TradingViewSymbol() {
             </div>
           </Card>
 
-          {/* Open positions placeholder */}
+          {/* User orders table */}
           <Card
             className="trading-card"
-            title="Open Positions"
+            title="Your Orders"
             bordered={false}
             style={{ marginTop: "16px" }}
+            extra={
+              <Button
+                type="primary"
+                size="small"
+                onClick={fetchUserOrders}
+                icon={<SearchOutlined />}
+              >
+                Refresh
+              </Button>
+            }
           >
-            <div
-              style={{ padding: "16px", textAlign: "center", color: "#848e9c" }}
-            >
-              No open positions
-            </div>
+            <Table
+              dataSource={userOrders}
+              columns={userOrdersColumns}
+              size="small"
+              pagination={false}
+              rowKey="id"
+              locale={{ emptyText: "No orders yet" }}
+            />
           </Card>
         </Col>
 
@@ -706,6 +915,14 @@ export function TradingViewSymbol() {
                   <Form.Item
                     label={<span className="order-label">Volume</span>}
                     name="amount"
+                    rules={[
+                      { required: true, message: "Please enter an amount" },
+                      {
+                        type: "number",
+                        min: 0.01,
+                        message: "Minimum amount is 0.01",
+                      },
+                    ]}
                   >
                     <InputNumber
                       className="order-input"
@@ -793,16 +1010,23 @@ export function TradingViewSymbol() {
               </TabPane>
 
               <TabPane tab="Market" key="market">
-                <div
-                  style={{
-                    height: "300px",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    color: "#848e9c",
-                  }}
-                >
-                  Market depth information will appear here
+                <Table
+                  dataSource={marketOrders}
+                  columns={marketOrdersColumns}
+                  size="small"
+                  pagination={false}
+                  rowKey="id"
+                  loading={loadingOrders}
+                  locale={{ emptyText: "No market orders available" }}
+                />
+                <div style={{ marginTop: "10px", textAlign: "center" }}>
+                  <Button
+                    type="primary"
+                    size="small"
+                    onClick={fetchMarketOrders}
+                  >
+                    Refresh Market
+                  </Button>
                 </div>
               </TabPane>
             </Tabs>
