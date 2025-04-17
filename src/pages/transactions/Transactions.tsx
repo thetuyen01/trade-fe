@@ -79,7 +79,20 @@ const Transactions = () => {
   };
 
   const getTypeColor = (type: string) => {
-    return type === "deposit" ? "orange" : "blue";
+    switch (type.toLowerCase()) {
+      case "deposit":
+        return "green";
+      case "purchase":
+        return "blue";
+      case "buy":
+        return "purple";
+      case "sell":
+        return "orange";
+      case "refund":
+        return "purple";
+      default:
+        return "default";
+    }
   };
 
   const formatAmount = (amount: number, type: string) => {
@@ -89,8 +102,14 @@ const Transactions = () => {
     }).format(amount);
 
     return (
-      <span className={type === "deposit" ? "text-red-600" : "text-green-600"}>
-        {type === "deposit" ? "-" : "+"}
+      <span
+        className={
+          ["purchase", "buy"].includes(type.toLowerCase())
+            ? "text-red-600"
+            : "text-green-600"
+        }
+      >
+        {["purchase", "buy"].includes(type.toLowerCase()) ? "-" : "+"}
         {formattedAmount}
       </span>
     );
@@ -180,8 +199,10 @@ const Transactions = () => {
         >
           <Form.Item name="type" label="Type">
             <Select style={{ width: 150 }} placeholder="All Types" allowClear>
-              <Option value="deposit">Deposit</Option>
-              <Option value="purchase">Purchase</Option>
+              <Option value="deposit">DEPOSIT</Option>
+              <Option value="purchase">PURCHASE</Option>
+              <Option value="buy">BUY</Option>
+              <Option value="sell">SELL</Option>
             </Select>
           </Form.Item>
 
