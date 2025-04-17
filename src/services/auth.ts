@@ -11,6 +11,12 @@ interface RegisterData {
   password: string;
 }
 
+interface ChangePasswordData {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
 interface User {
   id: string;
   fullName: string;
@@ -30,6 +36,13 @@ export const authService = {
 
   async register(userData: RegisterData): Promise<AuthResponse> {
     const response = await api.post("/auth/register", userData);
+    return response.data;
+  },
+
+  async changePassword(
+    data: ChangePasswordData
+  ): Promise<{ success: boolean; message: string }> {
+    const response = await api.post("/auth/change-password", data);
     return response.data;
   },
 
