@@ -21,13 +21,17 @@ interface WalletState {
     qrCodeData?: string;
   }>;
   clearError: () => void;
+  startPolling: () => void;
+  stopPolling: () => void;
+  pollingInterval: number | null;
 }
 
-export const useWalletStore = create<WalletState>((set) => ({
+export const useWalletStore = create<WalletState>((set, get) => ({
   wallet: null,
   transactions: [],
   isLoading: false,
   error: null,
+  pollingInterval: null,
 
   fetchWallet: async () => {
     set({ isLoading: true });
@@ -79,4 +83,24 @@ export const useWalletStore = create<WalletState>((set) => ({
   },
 
   clearError: () => set({ error: null }),
+
+  startPolling: () => {
+    // Stop any existing polling first
+    get().stopPolling();
+
+    // Start a new polling interval (every 3 seconds)
+    const interval = window.setInterval(() => {
+      get().fetchWallet();
+    }, 4000);
+
+    set({ pollingInterval: interval });
+  },
+
+  stopPolling: () => {
+    const { pollingInterval } = get();
+    if (pollingInterval !== null) {
+      window.clearInterval(pollingInterval);
+      set({ pollingInterval: null });
+    }
+  },
 }));

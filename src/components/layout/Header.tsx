@@ -20,7 +20,7 @@ import { useEffect, useState } from "react";
 
 const Header = () => {
   const { user, isAuthenticated, logout } = useAuthStore();
-  const { wallet, fetchWallet } = useWalletStore();
+  const { wallet, fetchWallet, startPolling, stopPolling } = useWalletStore();
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const currentPath = location.pathname.split("/")[1] || "home";
@@ -28,8 +28,13 @@ const Header = () => {
   useEffect(() => {
     if (isAuthenticated) {
       fetchWallet();
+      startPolling();
     }
-  }, [isAuthenticated, fetchWallet]);
+
+    return () => {
+      stopPolling();
+    };
+  }, [isAuthenticated, fetchWallet, startPolling, stopPolling]);
 
   // Add scroll effect
   useEffect(() => {
@@ -46,6 +51,7 @@ const Header = () => {
   }, []);
 
   const handleLogout = async () => {
+    stopPolling();
     await logout();
   };
 
