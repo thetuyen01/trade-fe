@@ -1,12 +1,13 @@
 import api from "./api";
 
 export interface Package {
-  id: string;
+  id: number;
   name: string;
   description: string;
   price: number;
   duration: number; // in days
-  benefits: string[];
+  features: string[];
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }

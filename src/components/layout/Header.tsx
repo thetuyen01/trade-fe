@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Dropdown, Avatar, Button, Badge, Menu, Tooltip } from "antd";
+import { Dropdown, Avatar, Button, Badge, Tooltip, List, Popover } from "antd";
 import type { MenuProps } from "antd";
 import {
   UserOutlined,
@@ -13,27 +13,98 @@ import {
   HistoryOutlined,
   HomeOutlined,
   LineChartOutlined,
+  CheckOutlined,
 } from "@ant-design/icons";
 import { useAuthStore } from "../../store/authStore";
 import { useWalletStore } from "../../store/walletStore";
 import { useEffect, useState } from "react";
+import { notificationService, Notification } from "../../services/notification";
 
 const Header = () => {
   const { user, isAuthenticated, logout } = useAuthStore();
   const { wallet, fetchWallet, startPolling, stopPolling } = useWalletStore();
   const [scrolled, setScrolled] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notificationVisible, setNotificationVisible] = useState(false);
   const location = useLocation();
   const currentPath = location.pathname.split("/")[1] || "home";
 
+  // Fetch notifications
+  const fetchNotifications = async () => {
+    try {
+      const data = await notificationService.getUserNotifications();
+      setNotifications(data);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
+  };
+
+  // Fetch unread count
+  const fetchUnreadCount = async () => {
+    try {
+      const count = await notificationService.getUnreadCount();
+      setUnreadCount(count);
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+    }
+  };
+
+  // Mark notification as read
+  const markAsRead = async (id: number) => {
+    try {
+      await notificationService.markAsRead(id);
+      // Update the local state to reflect the change immediately
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((notification) =>
+          notification.id === id
+            ? { ...notification, isRead: true }
+            : notification
+        )
+      );
+      fetchUnreadCount(); // Update the unread count
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  };
+
+  // Mark all notifications as read
+  const markAllAsRead = async () => {
+    try {
+      await notificationService.markAllAsRead();
+      // Update the local state to reflect the change immediately
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((notification) => ({
+          ...notification,
+          isRead: true,
+        }))
+      );
+      setUnreadCount(0); // Reset unread count to zero
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+    }
+  };
+
   useEffect(() => {
     if (isAuthenticated) {
+      fetchNotifications();
       fetchWallet();
+      // Only fetch notifications when the dropdown is first opened
+      // or when authentication state changes
+      fetchUnreadCount();
       startPolling();
-    }
 
-    return () => {
-      stopPolling();
-    };
+      // Poll for unread count only, not full notifications (for performance)
+      const notificationInterval = setInterval(() => {
+        fetchUnreadCount();
+        fetchNotifications();
+      }, 5000); // 5 seconds
+
+      return () => {
+        stopPolling();
+        clearInterval(notificationInterval);
+      };
+    }
   }, [isAuthenticated, fetchWallet, startPolling, stopPolling]);
 
   // Add scroll effect
@@ -127,6 +198,66 @@ const Header = () => {
     },
   ];
 
+  const notificationContent = (
+    <div className="w-80 max-h-96">
+      <div className="flex justify-between items-center mb-2 pb-2 border-b">
+        <h3 className="text-base font-medium m-0">Notifications</h3>
+        {unreadCount > 0 && (
+          <Button
+            type="text"
+            size="small"
+            onClick={markAllAsRead}
+            icon={<CheckOutlined />}
+          >
+            Mark all as read
+          </Button>
+        )}
+      </div>
+      {notifications.length > 0 ? (
+        <List
+          className="max-h-72 overflow-y-auto"
+          itemLayout="horizontal"
+          dataSource={notifications}
+          renderItem={(item) => (
+            <List.Item
+              className={`px-4 py-2 hover:bg-gray-50 cursor-pointer ${
+                !item.isRead ? "bg-blue-50" : ""
+              }`}
+              onClick={() => markAsRead(item.id)}
+            >
+              <List.Item.Meta
+                title={
+                  <span className={!item.isRead ? "font-medium" : ""}>
+                    {item.title}
+                  </span>
+                }
+                description={
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">
+                      {new Date(item.createdAt).toLocaleString()}
+                    </p>
+                    <p className="text-sm mb-0 line-clamp-2">{item.content}</p>
+                  </div>
+                }
+              />
+            </List.Item>
+          )}
+        />
+      ) : (
+        <div className="py-8 text-center text-gray-500">No notifications</div>
+      )}
+      <div className="mt-2 pt-2 border-t text-center">
+        <Link
+          to="/notifications"
+          className="text-blue-600 text-sm no-underline"
+          onClick={() => setNotificationVisible(false)}
+        >
+          View all notifications
+        </Link>
+      </div>
+    </div>
+  );
+
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -187,16 +318,32 @@ const Header = () => {
                 </Tooltip>
               )}
 
-              <Tooltip title="Notifications">
-                <Badge count={3} size="small">
-                  <Button
-                    type="text"
-                    shape="circle"
-                    icon={<BellOutlined />}
-                    className="flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:text-blue-600"
-                  />
-                </Badge>
-              </Tooltip>
+              <Popover
+                content={notificationContent}
+                title={null}
+                trigger="click"
+                open={notificationVisible}
+                onOpenChange={(visible) => {
+                  setNotificationVisible(visible);
+                  if (visible) {
+                    // Fetch notifications only when the popover is opened
+                    fetchNotifications();
+                  }
+                }}
+                placement="bottomRight"
+                overlayClassName="notification-popover"
+              >
+                <Tooltip title="Notifications">
+                  <Badge count={unreadCount} size="small">
+                    <Button
+                      type="text"
+                      shape="circle"
+                      icon={<BellOutlined />}
+                      className="flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:text-blue-600"
+                    />
+                  </Badge>
+                </Tooltip>
+              </Popover>
 
               <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
                 <a className="flex items-center space-x-2 cursor-pointer p-1 rounded-full hover:bg-gray-100 transition-all no-underline">

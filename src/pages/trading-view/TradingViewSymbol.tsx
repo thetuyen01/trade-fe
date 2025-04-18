@@ -30,7 +30,7 @@ import orderService, { Order } from "../../services/orderService";
 import walletService from "../../services/walletService";
 import "./TradingView.css";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { Option } = Select;
 const { TabPane } = Tabs;
 
@@ -1038,8 +1038,6 @@ export function TradingViewSymbol() {
     // Simple pip value calculation - would be different for each instrument type
     return ((amount * leverage) / 10000).toFixed(2);
   };
-
-  const showTrading = isForexSymbol(symbol);
 
   // Market orders table columns
   const marketOrdersColumns = [
