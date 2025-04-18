@@ -1,4 +1,5 @@
 import api from "./api";
+import { TradingAccount } from "./tradingAccount";
 
 export interface Package {
   id: number;
@@ -22,6 +23,7 @@ export interface UserPackage {
   status: "active" | "expired" | "cancelled";
   createdAt: string;
   updatedAt: string;
+  mt5Account?: TradingAccount;
 }
 
 interface PurchasePackageResponse {

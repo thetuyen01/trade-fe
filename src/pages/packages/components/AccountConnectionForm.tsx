@@ -4,7 +4,7 @@ import { LockOutlined, NumberOutlined, ApiOutlined } from "@ant-design/icons";
 import {
   TradingAccount,
   tradingAccountService,
-} from "../../services/tradingAccount";
+} from "../../../services/tradingAccount";
 
 interface AccountConnectionFormProps {
   userPackageId: string;
@@ -34,11 +34,29 @@ const AccountConnectionForm = ({
         }
       );
 
-      if (response.success && response.account) {
+      if (response.success && response.id) {
         notification.success({
           message: "Account connected successfully!",
         });
-        onSuccess(response.account);
+
+        // Create a TradingAccount object from the response
+        const account: TradingAccount = {
+          id: response.id,
+          account: response.account || "",
+          server: values.server,
+          name: response.name || "",
+          balance: response.balance || 0,
+          equity: response.equity || 0,
+          margin: response.margin || 0,
+          currency: response.currency || "",
+          connected: response.connected || false,
+          isActive: true,
+          userPackageId: userPackageId,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        onSuccess(account);
         form.resetFields();
       } else {
         notification.error({
@@ -63,11 +81,11 @@ const AccountConnectionForm = ({
       initialValues={
         existingAccount
           ? {
-              accountNumber: existingAccount.accountNumber,
+              accountNumber: existingAccount.account,
               server: existingAccount.server,
-              accountType: existingAccount.accountType,
+              accountType: "MT5", // Default to MT5 since it's not in the TradingAccount interface
             }
-          : { accountType: "MT5" }
+          : { accountType: "MT5", server: "Exness-MT5Real15" }
       }
       onFinish={handleSubmit}
     >
@@ -77,7 +95,6 @@ const AccountConnectionForm = ({
         rules={[{ required: true, message: "Please select an account type" }]}
       >
         <Select>
-          <Select.Option value="MT4">MetaTrader 4</Select.Option>
           <Select.Option value="MT5">MetaTrader 5</Select.Option>
         </Select>
       </Form.Item>
@@ -96,12 +113,13 @@ const AccountConnectionForm = ({
         <Input prefix={<NumberOutlined />} placeholder="12345678" />
       </Form.Item>
 
-      <Form.Item
-        name="server"
-        label="Server"
-        rules={[{ required: true, message: "Please enter your MT server" }]}
-      >
-        <Input prefix={<ApiOutlined />} placeholder="BrokerServer1" />
+      <Form.Item name="server" label="Server">
+        <Input
+          prefix={<ApiOutlined />}
+          readOnly
+          defaultValue={"Exness-MT5Real15"}
+          placeholder="Broker Server"
+        />
       </Form.Item>
 
       {!existingAccount && (
