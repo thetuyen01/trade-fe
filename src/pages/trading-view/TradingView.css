@@ -293,3 +293,55 @@
   color: #848e9c;
   margin-bottom: 4px;
 }
+
+/* Price animation classes */
+.price-up {
+  color: #00a781;
+  animation: flashGreen 0.5s ease-out;
+}
+
+.price-down {
+  color: #ff4a68;
+  animation: flashRed 0.5s ease-out;
+}
+
+@keyframes flashGreen {
+  0% {
+    background-color: rgba(0, 167, 129, 0.3);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes flashRed {
+  0% {
+    background-color: rgba(255, 74, 104, 0.3);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+/* Make sure chart container has relative positioning for the overlay */
+.tradingview-container {
+  position: relative;
+  height: 500px;
+  width: 100%;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* Loading overlay styles */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(19, 23, 34, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
