@@ -43,10 +43,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       authService.saveToken(response.access_token);
       set({ user: response.user, isAuthenticated: true, isLoading: false });
       return { status: 200, message: "Login successful" };
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Login failed";
-      set({ error: errorMessage, isLoading: false });
+    } catch (error: any) {
+      set({ error: error?.message, isLoading: false });
       throw error;
     }
   },
@@ -61,10 +59,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
       set({ isLoading: false });
       return { status: 201, message: "Registration successful" };
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Registration failed";
-      set({ error: errorMessage, isLoading: false });
+    } catch (error: any) {
+      set({ error: error?.message, isLoading: false });
       throw error;
     }
   },
