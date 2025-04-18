@@ -38,21 +38,60 @@ const Wallet = () => {
   } | null>(null);
   const [depositAmount, setDepositAmount] = useState<number>(0);
   const [bankInfo, setBankInfo] = useState<BankInfo | null>(null);
+  const [refreshingBalance, setRefreshingBalance] = useState(false);
+  const [silentFetching, setSilentFetching] = useState(false);
 
   const {
     wallet,
     fetchWallet,
     isLoading: walletLoading,
     error: walletError,
+    startPolling,
+    stopPolling,
   } = useWalletStore();
 
-  const { isLoading: transactionsLoading, error: transactionsError } = useQuery(
-    {
-      queryKey: ["wallet-transactions"],
-      queryFn: () => walletService.getTransactions({ type: "DEPOSIT" }),
-      enabled: !!wallet,
+  // Initial wallet fetch
+  useEffect(() => {
+    fetchWallet();
+
+    // Start auto polling for wallet balance updates
+    startPolling();
+
+    // Cleanup polling on component unmount
+    return () => {
+      stopPolling();
+    };
+  }, [fetchWallet, startPolling, stopPolling]);
+
+  // Silent transaction fetching without loading state
+  const fetchTransactionsSilently = async () => {
+    setSilentFetching(true);
+    try {
+      await walletService.getTransactions({ type: "DEPOSIT" });
+    } catch (error) {
+      console.error("Failed to silently fetch transactions:", error);
+    } finally {
+      setSilentFetching(false);
     }
-  );
+  };
+
+  // Fetch transactions once when wallet is available
+  useEffect(() => {
+    if (wallet) {
+      fetchTransactionsSilently();
+    }
+  }, [wallet]);
+
+  // Auto-refresh transactions every 15 seconds
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (wallet) {
+        fetchTransactionsSilently();
+      }
+    }, 15000);
+
+    return () => clearInterval(intervalId);
+  }, [wallet]);
 
   const {
     data: bankInfoData,
@@ -92,6 +131,9 @@ const Wallet = () => {
       setPaymentInfo({
         qrCodeData: qrLink,
       });
+
+      // Trigger silent transaction fetch after generating QR
+      fetchTransactionsSilently();
     } finally {
       setDepositLoading(false);
     }
@@ -101,11 +143,27 @@ const Wallet = () => {
     depositForm.setFieldsValue({ amount });
   };
 
-  if (walletLoading || transactionsLoading || bankInfoLoading) {
+  // Silently refresh wallet balance without page loading
+  const refreshBalance = async () => {
+    setRefreshingBalance(true);
+    try {
+      const updatedWallet = await walletService.getWallet();
+      // Update only wallet in store without setting isLoading
+      useWalletStore.setState({ wallet: updatedWallet });
+      // Also refresh transactions silently
+      fetchTransactionsSilently();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setRefreshingBalance(false);
+    }
+  };
+
+  if (bankInfoLoading) {
     return <LoadingSpinner />;
   }
 
-  if (walletError || transactionsError || bankInfoError) {
+  if (walletError || bankInfoError) {
     return (
       <ErrorMessage
         message="Failed to load wallet information"
@@ -145,7 +203,8 @@ const Wallet = () => {
               type="primary"
               icon={<ArrowUpOutlined />}
               className="mt-4"
-              onClick={() => fetchWallet()}
+              onClick={refreshBalance}
+              loading={refreshingBalance}
             >
               Refresh Balance
             </Button>

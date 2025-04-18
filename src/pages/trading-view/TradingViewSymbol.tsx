@@ -135,25 +135,6 @@ const getCurrentPrice = (data: any[]) => {
   return data[data.length - 1].close;
 };
 
-// Determine if a symbol is forex
-const isForexSymbol = (symbol: string) => {
-  const forexPatterns = [
-    "EUR",
-    "USD",
-    "GBP",
-    "JPY",
-    "AUD",
-    "NZD",
-    "CAD",
-    "CHF",
-  ];
-
-  return (
-    forexPatterns.some((pattern) => symbol.includes(pattern)) &&
-    !symbol.includes("USDT")
-  );
-};
-
 // Popular trading symbols for the top bar
 const POPULAR_SYMBOLS = [
   { symbol: "EURUSD", price: 1.13992, change: 0.12 },
@@ -168,14 +149,6 @@ type ChartType = "candles" | "line" | "area";
 type TimeFrame = "1m" | "5m" | "15m" | "30m" | "1h" | "4h" | "1D" | "1W";
 type TradeType = "buy" | "sell";
 type OrderType = "market" | "limit" | "stop";
-
-// Generate random price movement for real-time updates
-const generatePriceUpdate = (lastPrice: number, volatility = 0.01) => {
-  // Significantly increase volatility for more noticeable price movements
-  const changePercent = (Math.random() - 0.5) * 2 * volatility;
-  // Ensure we keep at least 4 decimal places of precision
-  return Math.round(lastPrice * (1 + changePercent) * 10000) / 10000;
-};
 
 // Convert timestamp to lightweight-charts time format
 const formatTimeForChart = (timestamp: Date, timeFrame: TimeFrame) => {
